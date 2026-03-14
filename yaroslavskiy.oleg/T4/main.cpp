@@ -34,7 +34,7 @@ int main() {
     for (Shape* shape : shapes) {
         printShapeInfo(shape);
     }
-    
+
     for (Shape* shape : shapes) {
         shape->scale(2.0);
     }
