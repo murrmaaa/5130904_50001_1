@@ -27,9 +27,9 @@ int main() {
     shapes.push_back(e3);
     shapes.push_back(c1);
 
-    for (Shape* shape : shapes) {
-        printShapeInfo(shape);
-    }
+//    for (Shape* shape : shapes) {
+//        printShapeInfo(shape);
+//    }
 
     for (Shape* shape : shapes) {
         shape->scale(2.0);
