@@ -15,7 +15,7 @@ int main() {
     std::cout << "INPUT TEST\n";
     std::cin >> a;
     std::cout << "\n!!!\n" << a << "\n!!!\n";
-    
+
     std::cerr << "ERROR TEST\n";
 
     return 1;
