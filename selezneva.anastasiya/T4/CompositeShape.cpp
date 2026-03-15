@@ -72,7 +72,7 @@ void CompositeShape::scale(double factor) {
 
     Point newCenter = getCenter();
 
-    double dx = oldCenter.x - newCenter.x; 
+    double dx = oldCenter.x - newCenter.x;
     double dy = oldCenter.y - newCenter.y;
 
     for (auto& shape : shapes_) {
