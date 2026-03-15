@@ -2,23 +2,37 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <algorithm>
 #include "rectangle.hpp"
 #include "ellipse.hpp"
 #include "compositeShape.hpp"
 
+
 void printShapeInfo(const Shape* shape);
 
-int main() {
+int main()
+{
+    std::string line;
+    std::getline(std::cin, line);
+    // std::cout << "\nline:'" << line << "'";
+    if (line.empty()) {
+        std::cerr << "пусто";
+        return 1;
+    }
+    /*else {
+        std::cout << " ne pusto";
+        return 0;
+    }*/
 
-    std::string a = "";
 
-    std::cout << "INPUT TEST\n";
-    std::cin >> a;
-    std::cout << "\n!!!\n" << a << "\n!!!\n";
 
-    std::cerr << "ERROR TEST\n";
+    // std::string a = "";
+    // std::cin >> a;
+    // std::cout << "\n!!!\n" << a << "\n!!!\n";
 
-    return 1;
+    // std::cerr << "ERROR TEST\n";
+
+    // return 1;
 
     Rectangle* r1 = new Rectangle(Point(0, 0), Point(4, 3));
     Rectangle* r2 = new Rectangle(Point(1, 2), Point(4, 5));
