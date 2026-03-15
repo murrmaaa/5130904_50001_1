@@ -34,7 +34,7 @@ int main() {
     shapes.push_back(c1);
 
     for (Shape* shape : shapes) {
-        printShapeInfo(shape); // 
+        printShapeInfo(shape);
     }
 
     for (Shape* shape : shapes) {
