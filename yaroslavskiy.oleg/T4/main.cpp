@@ -10,9 +10,13 @@ void printShapeInfo(const Shape* shape);
 
 int main() {
 
+    std::string a = "";
+
     std::cout << "INPUT TEST\n";
-    // std::cin << "INPUT TEST";
-    std::cerr << "ERROR TEST";
+    std::cin >> a;
+    std::cout << "\n!!!\n" << a << "\n!!!\n";
+    
+    std::cerr << "ERROR TEST\n";
 
     return 1;
 
