@@ -1,7 +1,7 @@
 #include "include/rectangle.h"
 #include <algorithm>
 
-Rectangle::Rectangle(Point bottomLeft, Point topRight) 
+Rectangle::Rectangle(Point bottomLeft, Point topRight)
     : bl_(bottomLeft), tr_(topRight) {
     if (bl_.x > tr_.x) std::swap(bl_.x, tr_.x);
     if (bl_.y > tr_.y) std::swap(bl_.y, tr_.y);

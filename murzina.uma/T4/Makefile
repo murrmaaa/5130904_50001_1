@@ -1,3 +1,4 @@
+cat > Makefile << 'MAKEFILE_END'
 CXX = clang++
 CXXFLAGS = -std=c++17 -Wall -Wextra -I. -I./include
 TARGET = main
@@ -20,3 +21,4 @@ clean:
 
 run: $(TARGET)
 	./$(TARGET)
+MAKEFILE_END
