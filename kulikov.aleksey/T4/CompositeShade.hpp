@@ -1,7 +1,7 @@
 #ifndef COMPOSITE_SHAPE_H
 #define COMPOSITE_SHAPE_H
 
-#include "shape.hpp"
+#include "Shape.hpp"
 
 class CompositeShape : public Shape {
 public:
