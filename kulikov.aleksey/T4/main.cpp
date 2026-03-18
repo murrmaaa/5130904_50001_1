@@ -9,7 +9,7 @@ using namespace std;
 void printShape(Shape* s) {
     cout << fixed << setprecision(2);
     if (s->getName() == "COMPOSITE") {
-        CompositeShape* cs = (CompositeShape*)s;
+        CompositeShape* cs = static_cast<CompositeShape*>(s);
         Point c = cs->getCenter();
         cout << "[COMPOSITE, (" << c.x << ", " << c.y << "), " << cs->getArea() << ":";
         for (int i = 0; i < cs->getCount(); i++) {
