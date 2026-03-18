@@ -11,7 +11,7 @@ void printShapeInfo(const Shape* shape) {
   if (shape == nullptr) {
     return;
   }
-  
+
   Point center = shape->getCenter();
   std::cout << "[" << shape->getName() << ", ("
             << std::fixed << std::setprecision(2)
