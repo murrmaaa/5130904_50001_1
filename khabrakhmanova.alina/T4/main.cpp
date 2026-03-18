@@ -26,7 +26,6 @@ void printShape(const Shape& shape) {
 }
 
 int main() {
-    
     try {
         auto rect1 = std::make_unique<Rectangle>(Point{0, 0}, Point{4, 3});
         auto rect2 = std::make_unique<Rectangle>(Point{1, 1}, Point{5, 4});
