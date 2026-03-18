@@ -20,3 +20,4 @@ clean:
 
 run: $(TARGET)
 	./$(TARGET)
+# Updated: среда, 18 марта 2026 г. 21:15:49 (MSK)
