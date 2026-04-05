@@ -2,6 +2,7 @@
 #include "DataStruct.hpp"
 #include <string>
 #include <sstream>
+#include <cctype>
 
 namespace nspace
 {
@@ -13,36 +14,33 @@ namespace nspace
             return in;
         }
 
-        // Ищем нужный формат: (:key1 <число>LL:key2 (:N <число>:D <число>:):key3 "<строка">:)
-        // Если формат не подходит - пропускаем строку и ставим failbit
-
-        size_t pos1 = line.find(":key1 ");
-        if (pos1 == std::string::npos)
-        {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
-        pos1 += 6;
-
-        size_t pos2 = line.find("LL", pos1);
-        if (pos2 == std::string::npos)
+        size_t key1_pos = line.find(":key1 ");
+        if (key1_pos == std::string::npos)
         {
             in.setstate(std::ios::failbit);
             return in;
         }
 
-        // Проверяем, что между :key1 и LL только цифры и минус
-        std::string key1_str = line.substr(pos1, pos2 - pos1);
-        bool valid_key1 = true;
-        for (char c : key1_str)
+        size_t key1_start = key1_pos + 6;
+        size_t key1_end = line.find("LL", key1_start);
+        if (key1_end == std::string::npos)
         {
-            if (c != '-' && (c < '0' || c > '9'))
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+
+        std::string key1_str = line.substr(key1_start, key1_end - key1_start);
+        bool key1_ok = true;
+        for (size_t i = 0; i < key1_str.size(); ++i)
+        {
+            if (i == 0 && key1_str[i] == '-') continue;
+            if (!std::isdigit(static_cast<unsigned char>(key1_str[i])))
             {
-                valid_key1 = false;
+                key1_ok = false;
                 break;
             }
         }
-        if (!valid_key1)
+        if (!key1_ok || key1_str.empty())
         {
             in.setstate(std::ios::failbit);
             return in;
@@ -50,85 +48,92 @@ namespace nspace
 
         dest.key1 = std::stoll(key1_str);
 
-        size_t posN = line.find(":key2 (:N ");
-        if (posN == std::string::npos)
-        {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
-        posN += 10; // length of ":key2 (:N "
-
-        size_t posD = line.find(":D ", posN);
-        if (posD == std::string::npos)
+        size_t key2_pos = line.find(":key2 (:N ");
+        if (key2_pos == std::string::npos)
         {
             in.setstate(std::ios::failbit);
             return in;
         }
 
-        std::string num_str = line.substr(posN, posD - posN);
-        bool valid_num = true;
-        for (char c : num_str)
+        size_t num_start = key2_pos + 11;
+        size_t d_pos = line.find(":D ", num_start);
+        if (d_pos == std::string::npos)
         {
-            if (c != '-' && (c < '0' || c > '9'))
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+
+        std::string num_str = line.substr(num_start, d_pos - num_start);
+        bool num_ok = true;
+        for (size_t i = 0; i < num_str.size(); ++i)
+        {
+            if (i == 0 && num_str[i] == '-') continue;
+            if (!std::isdigit(static_cast<unsigned char>(num_str[i])))
             {
-                valid_num = false;
+                num_ok = false;
                 break;
             }
         }
-        if (!valid_num)
+        if (!num_ok || num_str.empty())
         {
             in.setstate(std::ios::failbit);
             return in;
         }
 
-        long long num = std::stoll(num_str);
+        long long numerator = std::stoll(num_str);
 
-        size_t posClose = line.find(":):", posD + 3);
-        if (posClose == std::string::npos)
+        size_t den_start = d_pos + 3;
+        size_t close_pos = line.find(":)", den_start);
+        if (close_pos == std::string::npos)
         {
             in.setstate(std::ios::failbit);
             return in;
         }
 
-        std::string den_str = line.substr(posD + 3, posClose - (posD + 3));
-        bool valid_den = true;
-        for (char c : den_str)
+        std::string den_str = line.substr(den_start, close_pos - den_start);
+        bool den_ok = true;
+        for (size_t i = 0; i < den_str.size(); ++i)
         {
-            if (c < '0' || c > '9')
+            if (!std::isdigit(static_cast<unsigned char>(den_str[i])))
             {
-                valid_den = false;
+                den_ok = false;
                 break;
             }
         }
-        if (!valid_den)
+        if (!den_ok || den_str.empty())
         {
             in.setstate(std::ios::failbit);
             return in;
         }
 
-        unsigned long long den = std::stoull(den_str);
+        unsigned long long denominator = std::stoull(den_str);
 
-        dest.key2 = { num, den };
-
-        size_t posKey3 = line.find(":key3 \"");
-        if (posKey3 == std::string::npos)
-        {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
-        posKey3 += 7;
-
-        size_t posQuote = line.find("\"", posKey3);
-        if (posQuote == std::string::npos)
+        if (denominator == 0)
         {
             in.setstate(std::ios::failbit);
             return in;
         }
 
-        dest.key3 = line.substr(posKey3, posQuote - posKey3);
+        dest.key2 = { numerator, denominator };
 
-        // Проверяем закрывающую скобку
-        if (line.find(":)", posQuote) == std::string::npos)
+        size_t key3_pos = line.find(":key3 \"");
+        if (key3_pos == std::string::npos)
+        {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+
+        size_t key3_start = key3_pos + 7;
+        size_t quote_pos = line.find("\"", key3_start);
+        if (quote_pos == std::string::npos)
+        {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+
+        dest.key3 = line.substr(key3_start, quote_pos - key3_start);
+
+        if (line.find(":)", quote_pos) == std::string::npos)
         {
             in.setstate(std::ios::failbit);
             return in;
@@ -145,10 +150,6 @@ namespace nspace
         return out;
     }
 }
-
-
-
-
 
 
 
