@@ -385,6 +385,25 @@ namespace
 
     return "0b" + bits;
   }
+
+  std::string formatDoubleSci(double value)
+  {
+    std::ostringstream out;
+    out << std::scientific << std::setprecision(1) << value;
+    std::string text = out.str();
+
+    const std::size_t ePos = text.find('e');
+    if ((ePos != std::string::npos) && (ePos + 2 < text.size()))
+    {
+      std::size_t pos = ePos + 2;
+      while ((pos + 1 < text.size()) && (text[pos] == '0'))
+      {
+        text.erase(pos, 1);
+      }
+    }
+
+    return text;
+  }
 }
 
 bool compareDataStruct(const DataStruct& lhs, const DataStruct& rhs)
@@ -434,7 +453,7 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& value)
   StreamFormatGuard guard(out);
 
   out << "(:key1 ";
-  out << std::scientific << std::setprecision(1) << value.key1;
+  out << formatDoubleSci(value.key1);
   out << ":key2 " << toBinaryString(value.key2);
   out << ":key3 \"" << value.key3 << "\":)";
 
