@@ -91,14 +91,7 @@ namespace
       }
     }
 
-    if (record.empty())
-    {
-      in.setstate(std::ios::failbit);
-    }
-    else
-    {
-      in.setstate(std::ios::failbit);
-    }
+    in.setstate(std::ios::failbit);
     return false;
   }
 
@@ -208,7 +201,8 @@ namespace
   bool parseUllBin(
       const std::string& text,
       std::size_t& position,
-      unsigned long long& value)
+      unsigned long long& value,
+      std::string& digits)
   {
     if ((position + 2 > text.size()) || (text[position] != '0') ||
         ((text[position + 1] != 'b') && (text[position + 1] != 'B')))
@@ -226,6 +220,7 @@ namespace
     unsigned long long result = 0;
     const unsigned long long maxValue =
         std::numeric_limits< unsigned long long >::max();
+    const std::size_t digitsStart = position;
 
     while ((position < text.size()) &&
         ((text[position] == '0') || (text[position] == '1')))
@@ -243,6 +238,7 @@ namespace
     }
 
     value = result;
+    digits = text.substr(digitsStart, position - digitsStart);
     return true;
   }
 
@@ -320,7 +316,7 @@ namespace
         {
           return false;
         }
-        parsed = parseUllBin(text, position, result.key2);
+        parsed = parseUllBin(text, position, result.key2, result.key2Digits);
         hasKey2 = parsed;
       }
       else if (fieldName == "key3")
@@ -369,21 +365,21 @@ namespace
     return false;
   }
 
-  std::string toBinaryString(unsigned long long value)
+  std::string toMinimalBinaryDigits(unsigned long long value)
   {
     if (value == 0)
     {
-      return "0b0";
+      return "0";
     }
 
-    std::string bits;
+    std::string digits;
     while (value > 0)
     {
-      bits.insert(bits.begin(), static_cast< char >('0' + (value % 2)));
+      digits.insert(digits.begin(), static_cast< char >('0' + (value % 2)));
       value /= 2;
     }
 
-    return "0b" + bits;
+    return digits;
   }
 
   std::string formatDoubleSci(double value)
@@ -452,9 +448,13 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& value)
 
   StreamFormatGuard guard(out);
 
+  const std::string key2Digits = value.key2Digits.empty() ?
+      toMinimalBinaryDigits(value.key2) :
+      value.key2Digits;
+
   out << "(:key1 ";
   out << formatDoubleSci(value.key1);
-  out << ":key2 " << toBinaryString(value.key2);
+  out << ":key2 0b" << key2Digits;
   out << ":key3 \"" << value.key3 << "\":)";
 
   return out;
