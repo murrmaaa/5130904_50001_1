@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <iterator>
 #include "dataStruct.hpp"
 #include "dataIO.hpp"
 #include "dataStructComparator.hpp"
