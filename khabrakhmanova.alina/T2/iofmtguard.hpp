@@ -10,10 +10,10 @@ namespace nspace
     public:
         explicit iofmtguard(std::basic_ios<char>& s);
         ~iofmtguard();
-
+        
         iofmtguard(const iofmtguard&) = delete;
         iofmtguard& operator=(const iofmtguard&) = delete;
-
+        
     private:
         std::basic_ios<char>& s_;
         std::streamsize width_;

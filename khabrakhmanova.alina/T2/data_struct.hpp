@@ -13,7 +13,7 @@ namespace nspace
         std::complex<double> key2;         // CMP LSP
         std::string key3;
     };
-
+    
     bool compareData(const DataStruct& a, const DataStruct& b);
     std::istream& operator>>(std::istream& in, DataStruct& dest);
     std::ostream& operator<<(std::ostream& out, const DataStruct& src);
