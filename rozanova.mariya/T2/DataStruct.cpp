@@ -1,13 +1,10 @@
 #include "DataStruct.h"
-#include <cctype>
-#include <string>
-#include <sstream>
+#include <iomanip>
 
 namespace nspace
 {
     Iofmtguard::Iofmtguard(std::basic_ios<char>& s)
-        : s_(s), width_(s.width()), fill_(s.fill()), 
-          precision_(s.precision()), fmt_(s.flags()) {}
+        : s_(s), width_(s.width()), fill_(s.fill()), precision_(s.precision()), fmt_(s.flags()) {}
 
     Iofmtguard::~Iofmtguard()
     {
@@ -24,14 +21,14 @@ namespace nspace
         if (!sentry)
             return in;
 
-        char c = '\0';
+        char c;
         in >> c;
         if (in && c != dest.exp)
             in.setstate(std::ios::failbit);
         return in;
     }
 
-    // Чтение восьмеричного числа
+    // Чтение восьмиричного числа
     std::istream& operator>>(std::istream& in, OctIO&& dest)
     {
         std::istream::sentry sentry(in);
@@ -39,40 +36,33 @@ namespace nspace
             return in;
 
         std::string token;
-        in >> token;
 
-        if (!in)
+        char c;
+        while (in.get(c))
+        {
+            if (c == ':' || std::isspace(c))
+            {
+                in.putback(c);
+                break;
+            }
+            token += c;
+        }
+
+        if (!in && token.empty())
             return in;
 
-        // Проверка формата 0o или 0O
-        if (token.size() >= 2 && token[0] == '0' && 
-            (token[1] == 'o' || token[1] == 'O'))
+        if (token.size() >= 2 && token[0] == '0' && (token[1] == 'o' || token[1] == 'O'))
         {
             std::string octStr = token.substr(2);
-            
-            bool valid = true;
-            for (char c : octStr)
-            {
-                if (c < '0' || c > '7')
-                {
-                    valid = false;
-                    break;
+            for (char ch : octStr)
+                if (ch < '0' || ch > '7') {
+                    in.setstate(std::ios::failbit);
+                    return in;
                 }
-            }
-            
-            if (valid && !octStr.empty())
-            {
-                dest.ref = std::stoull(octStr, nullptr, 8);
-            }
-            else
-            {
-                in.setstate(std::ios::failbit);
-            }
+            dest.ref = std::stoull(octStr, nullptr, 8);
         }
         else
-        {
             in.setstate(std::ios::failbit);
-        }
 
         return in;
     }
@@ -84,14 +74,12 @@ namespace nspace
         if (!sentry)
             return in;
 
-        double real = 0.0, imag = 0.0;
-        
+        double real, imag;
         in >> DelimiterIO{ '#' } >> DelimiterIO{ 'c' } >> DelimiterIO{ '(' }
-           >> real >> imag >> DelimiterIO{ ')' };
+        >> real >> imag >> DelimiterIO{ ')' };
 
         if (in)
             dest.ref = std::complex<double>(real, imag);
-        
         return in;
     }
 
@@ -102,14 +90,7 @@ namespace nspace
         if (!sentry)
             return in;
 
-        in >> DelimiterIO{ '"' };
-        
-        if (!in)
-            return in;
-
-        std::getline(in, dest.ref, '"');
-        
-        return in;
+        return std::getline(in >> DelimiterIO{ '"' }, dest.ref, '"');
     }
 
     // Чтение и проверка метки
@@ -119,39 +100,33 @@ namespace nspace
         if (!sentry)
             return in;
 
-        std::string label;
-        in >> StringIO{ label };
-        
-        if (in && label != dest.exp)
+        std::string data;
+        if ((in >> StringIO{ data }) && data != dest.exp)
             in.setstate(std::ios::failbit);
-        
         return in;
     }
 
-    // Чтение всей структуры (формат: (:key1 0o177:key2 #c(1 2):key3 "hello":))
+    // Чтение всей структуры
     std::istream& operator>>(std::istream& in, DataStruct& dest)
     {
         std::istream::sentry sentry(in);
-        if (!sentry)
-            return in;
+        if (!sentry) return in;
 
         DataStruct input;
         bool key1_read = false, key2_read = false, key3_read = false;
 
         in >> DelimiterIO{ '(' };
-        if (!in)
-            return in;
+        if (!in) return in;
 
+        // Читаем 3 поля (в любом порядке)
         for (int i = 0; i < 3; ++i)
         {
             in >> DelimiterIO{ ':' };
-            if (!in)
-                return in;
+            if (!in) return in;
 
             std::string label;
             in >> label;
-            if (!in)
-                return in;
+            if (!in) return in;
 
             if (label == "key1")
             {
@@ -174,26 +149,23 @@ namespace nspace
                 return in;
             }
 
-            if (!in)
-                return in;
+            if (!in) return in;
         }
 
+        // Читаем двоеточие перед закрывающей скобкой
         in >> DelimiterIO{ ':' };
+        // Читаем закрывающую скобку
         in >> DelimiterIO{ ')' };
 
-        if (key1_read && key2_read && key3_read && in)
-        {
-            dest = input;
-        }
+        if (key1_read && key2_read && key3_read)
+            dest = std::move(input);
         else
-        {
             in.setstate(std::ios::failbit);
-        }
 
         return in;
     }
 
-    // Вывод DataStruct в формате: (:key1 0o177:key2 #c(1 2):key3 "hello":)
+    // Вывод DataStruct
     std::ostream& operator<<(std::ostream& out, const DataStruct& src)
     {
         Iofmtguard guard(out);

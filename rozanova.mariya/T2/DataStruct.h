@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include <complex>
-#include <iomanip>
 
 namespace nspace
 {
@@ -15,58 +14,34 @@ namespace nspace
         std::string key3;
     };
 
-    // Вспомогательные структуры для ввода
-    struct DelimiterIO 
-    { 
-        char exp; 
-    };
-    
-    struct OctIO 
-    { 
-        unsigned long long& ref; 
-    };
-    
-    struct ComplexIO 
-    { 
-        std::complex<double>& ref; 
-    };
-    
-    struct StringIO 
-    { 
-        std::string& ref; 
-    };
-    
-    struct LabelIO 
-    { 
-        std::string exp; 
-    };
+    // Вспомогательные структуры
+    struct DelimiterIO { char exp; }; // для разделителей
+    struct OctIO { unsigned long long& ref; }; // для восьмиричного числа
+    struct ComplexIO { std::complex<double>& ref; }; // для комплексного числа
+    struct StringIO { std::string& ref; }; // для строки
+    struct LabelIO { std::string exp; }; // для проверки структуры записи
 
-    // Класс для сохранения/восстановления форматирования потока
     class Iofmtguard
     {
-    public:
-        explicit Iofmtguard(std::basic_ios<char>& s);
-        ~Iofmtguard();
-        
-        Iofmtguard(const Iofmtguard&) = delete;
-        Iofmtguard& operator=(const Iofmtguard&) = delete;
-
     private:
         std::basic_ios<char>& s_;
         std::streamsize width_;
         char fill_;
         std::streamsize precision_;
         std::basic_ios<char>::fmtflags fmt_;
+    public:
+        explicit Iofmtguard(std::basic_ios<char>& s);
+        ~Iofmtguard();
     };
 
-    // Операторы ввода для вспомогательных структур
+    // Операторы для вспомогательных структур
     std::istream& operator>>(std::istream& in, DelimiterIO&& dest);
     std::istream& operator>>(std::istream& in, OctIO&& dest);
     std::istream& operator>>(std::istream& in, ComplexIO&& dest);
     std::istream& operator>>(std::istream& in, StringIO&& dest);
     std::istream& operator>>(std::istream& in, LabelIO&& dest);
 
-    // Операторы ввода/вывода для основной структуры
+    // Оператор для основной структуры
     std::istream& operator>>(std::istream& in, DataStruct& dest);
     std::ostream& operator<<(std::ostream& out, const DataStruct& dest);
 }
