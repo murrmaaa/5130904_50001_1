@@ -11,22 +11,22 @@ namespace nspace
     {
         char exp;
     };
-    
+
     struct StringIO
     {
         std::string& ref;
     };
-    
+
     struct ULLHexIO
     {
         unsigned long long& ref;
     };
-    
+
     struct ComplexIO
     {
         std::complex<double>& ref;
     };
-    
+
     std::istream& operator>>(std::istream& in, DelimiterIO&& dest);
     std::istream& operator>>(std::istream& in, StringIO&& dest);
     std::istream& operator>>(std::istream& in, ULLHexIO&& dest);
