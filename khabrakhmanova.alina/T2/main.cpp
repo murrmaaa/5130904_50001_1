@@ -8,6 +8,12 @@
 int main() {
     std::vector<DataStruct> data;
 
+    // Проверяем, есть ли вообще какие-то данные во входном потоке
+    if (std::cin.peek() == EOF) {
+        std::cout << "Looks like there is no supported record. Cannot determine input. Test skipped" << std::endl;
+        return 0;
+    }
+
     std::copy(
         std::istream_iterator<DataStruct>(std::cin),
         std::istream_iterator<DataStruct>(),
@@ -27,5 +33,5 @@ int main() {
         std::ostream_iterator<DataStruct>(std::cout, "\n")
     );
 
-    return EXIT_SUCCESS;
+    return 0;
 }
