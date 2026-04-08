@@ -28,21 +28,6 @@ static unsigned long long parseBinary(const std::string& s)
     return result;
 }
 
-static std::string toBinaryString(unsigned long long n)
-{
-    if (n == 0)
-        return "0b0";
-
-    std::string bits;
-    unsigned long long tmp = n;
-    while (tmp > 0)
-    {
-        bits = static_cast<char>('0' + tmp % 2) + bits;
-        tmp /= 2;
-    }
-
-    return "0b" + bits;
-}
 
 static bool tryParseRecord(const std::string& record, DataStruct& ds)
 {
@@ -91,6 +76,7 @@ static bool tryParseRecord(const std::string& record, DataStruct& ds)
             try
             {
                 temp.key1 = parseBinary(token);
+                temp.key1str = token;
                 hasKey1 = true;
             }
             catch (const std::exception&)
@@ -200,7 +186,7 @@ std::istream& operator>>(std::istream& in, DataStruct& ds)
 
 std::ostream& operator<<(std::ostream& out, const DataStruct& ds)
 {
-    out << "(:key1 " << toBinaryString(ds.key1);
+    out << "(:key1 " << ds.key1str;
     out << ":key2 #c(";
     out << std::fixed << std::setprecision(1);
     out << ds.key2.real() << " " << ds.key2.imag() << ")";
