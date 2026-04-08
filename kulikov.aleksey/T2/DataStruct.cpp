@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <cmath>
 
-unsigned long long parseBinary(const std::string& s)
+static unsigned long long parseBinary(const std::string& s)
 {
     if (s.size() < 3)
         throw std::invalid_argument("Binary literal too short");
@@ -28,7 +28,7 @@ unsigned long long parseBinary(const std::string& s)
     return result;
 }
 
-std::string toBinaryString(unsigned long long n)
+static std::string toBinaryString(unsigned long long n)
 {
     if (n == 0)
         return "0b0";
@@ -44,7 +44,7 @@ std::string toBinaryString(unsigned long long n)
     return "0b" + bits;
 }
 
-bool tryParseRecord(const std::string& record, DataStruct& ds)
+static bool tryParseRecord(const std::string& record, DataStruct& ds)
 {
     std::istringstream ss(record);
     char c;
