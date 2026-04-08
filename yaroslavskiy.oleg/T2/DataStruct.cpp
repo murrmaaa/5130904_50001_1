@@ -128,7 +128,6 @@ namespace
     return true;
   }
 
-  // Парсинг SLL LIT (например: -89ll, 123LL)
   bool parseSllLit(
       const std::string& text,
       std::size_t& position,
@@ -172,7 +171,6 @@ namespace
     return true;
   }
 
-  // Парсинг RAT LSP (например: (:N -3:D 2:))
   bool parseRational(
       const std::string& text,
       std::size_t& position,
@@ -402,7 +400,7 @@ namespace
 
   std::string formatLongLongLit(long long value)
   {
-    return std::to_string(value) + "LL";
+    return std::to_string(value) + "ll";
   }
 
   std::string formatRational(const std::pair<long long, unsigned long long>& value)

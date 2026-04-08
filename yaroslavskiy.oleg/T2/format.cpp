@@ -6,13 +6,12 @@
 
 std::string formatLongLongLit(long long value)
 {
-	return std::to_string(value) + "ll";
+  return std::to_string(value) + "ll";
 }
 
 std::string formatRational(const std::pair<long long, unsigned long long>& value)
 {
-	return "(:N " + std::to_string(value.first) + ":D " + std::to_string(value.second) + ":)";
+  return "(:N " + std::to_string(value.first) + ":D " + std::to_string(value.second) + ":)";
 }
-
 */
 
