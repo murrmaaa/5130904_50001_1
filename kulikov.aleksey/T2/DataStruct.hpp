@@ -10,6 +10,7 @@ struct DataStruct
     unsigned long long key1;
     std::complex<double> key2;
     std::string key3;
+    std::string key1str;
 };
 
 bool comparator(const DataStruct& a, const DataStruct& b);
