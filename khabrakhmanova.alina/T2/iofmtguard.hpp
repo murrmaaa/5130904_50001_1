@@ -1,5 +1,5 @@
-#ifndef IOFMTGUARD_HPP
-#define IOFMTGUARD_HPP
+#ifndef IOFMTGUARD_H
+#define IOFMTGUARD_H
 
 #include <iostream>
 

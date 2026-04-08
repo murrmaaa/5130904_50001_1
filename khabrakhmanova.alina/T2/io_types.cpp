@@ -1,6 +1,6 @@
 #include "io_types.hpp"
 #include <sstream>
-#include <iomanip>
+#include <cmath>
 #include <cctype>
 
 std::istream& operator>>(std::istream& in, DelimiterIO&& dest) {

@@ -3,8 +3,6 @@
 #include <iomanip>
 #include <cmath>
 #include <vector>
-#include <cctype>
-#include <algorithm>
 
 std::string formatHexULL(unsigned long long value) {
     std::ostringstream oss;

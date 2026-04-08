@@ -1,5 +1,5 @@
-#ifndef DATA_SORT_HPP
-#define DATA_SORT_HPP
+#ifndef DATASORT_H
+#define DATASORT_H
 
 #include "data_struct.hpp"
 #include <cmath>
