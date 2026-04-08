@@ -9,6 +9,14 @@
 
 int main()
 {
+    std::string line;
+    std::getline(std::cin, line);
+
+    if (line.empty()) {
+        std::cerr << "Invalid Input";
+        return EXIT_FAILURE;
+    }
+
     std::vector<DataStruct> data;
 
     std::copy(
