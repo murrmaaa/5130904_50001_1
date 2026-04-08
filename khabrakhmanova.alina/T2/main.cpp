@@ -16,13 +16,18 @@ int main()
         std::back_inserter(data)
     );
 
-    std::sort(data.begin(), data.end(), compareData);
+    std::cerr << "Read " << data.size() << " records" << std::endl;
 
-    std::copy(
-        data.begin(),
-        data.end(),
-        std::ostream_iterator<DataStruct>(std::cout, "\n")
-    );
+    if (!data.empty())
+    {
+        std::sort(data.begin(), data.end(), compareData);
+
+        std::copy(
+            data.begin(),
+            data.end(),
+            std::ostream_iterator<DataStruct>(std::cout, "\n")
+        );
+    }
 
     return EXIT_SUCCESS;
 }

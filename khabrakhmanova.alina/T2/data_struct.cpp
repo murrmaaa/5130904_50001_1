@@ -33,96 +33,153 @@ namespace nspace
         std::istream::sentry sentry(in);
         if (!sentry) return in;
 
-        std::streampos pos = in.tellg();
+        while (isspace(in.peek())) in.get();
+
+        if (in.peek() != '(')
+        {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+
+        char openParen;
+        in >> openParen;
+
+        char colon1;
+        in >> colon1;
+        if (colon1 != ':')
+        {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
 
         DataStruct input;
+        bool key1Read = false;
+        bool key2Read = false;
+        bool key3Read = false;
 
-        try
+        while (in && (!key1Read || !key2Read || !key3Read))
         {
-            char openParen, colon1;
-            in >> openParen >> colon1;
-            if (openParen != '(' || colon1 != ':')
+            while (isspace(in.peek())) in.get();
+
+            std::string label;
+            in >> label;
+
+            if (label != "key1" && label != "key2" && label != "key3")
             {
-                throw std::runtime_error("Expected '(:' at start of record");
+                in.setstate(std::ios::failbit);
+                return in;
             }
 
-            bool key1Read = false;
-            bool key2Read = false;
-            bool key3Read = false;
+            while (isspace(in.peek())) in.get();
 
-            while (in && (!key1Read || !key2Read || !key3Read))
+            char colon;
+            in >> colon;
+            if (colon != ':')
             {
-                std::string label;
-                in >> label;
+                in.setstate(std::ios::failbit);
+                return in;
+            }
 
-                if (label != "key1" && label != "key2" && label != "key3")
+            while (isspace(in.peek())) in.get();
+
+            if (label == "key1" && !key1Read)
+            {
+                char c;
+                in >> c;
+                if (c != '0')
                 {
-                    throw std::runtime_error("Invalid label: " + label);
+                    in.setstate(std::ios::failbit);
+                    return in;
                 }
 
-                char colon;
-                in >> colon;
-                if (colon != ':')
+                in >> c;
+                if (c != 'x' && c != 'X')
                 {
-                    throw std::runtime_error("Expected ':' after label");
+                    in.setstate(std::ios::failbit);
+                    return in;
                 }
 
-                if (label == "key1" && !key1Read)
-                {
-                    in >> ULLHexIO{input.key1};
-                    if (in)
-                        key1Read = true;
-                    else
-                        throw std::runtime_error("Failed to read key1 as ULL HEX");
-                }
-                else if (label == "key2" && !key2Read)
-                {
-                    in >> ComplexIO{input.key2};
-                    if (in)
-                        key2Read = true;
-                    else
-                        throw std::runtime_error("Failed to read key2 as complex");
-                }
-                else if (label == "key3" && !key3Read)
-                {
-                    in >> StringIO{input.key3};
-                    if (in)
-                        key3Read = true;
-                    else
-                        throw std::runtime_error("Failed to read key3");
-                }
+                in >> std::hex >> input.key1;
+                if (in)
+                    key1Read = true;
                 else
-                {
-                    throw std::runtime_error("Duplicate label: " + label);
-                }
-
-                char next;
-                in >> next;
-                if (next == ':')
-                {
-                    continue;
-                }
-                else if (next == ')')
-                {
-                    break;
-                }
-                else
-                {
-                    throw std::runtime_error("Expected ':' or ')' after value");
-                }
+                    return in;
             }
-
-            if (!key1Read || !key2Read || !key3Read)
+            else if (label == "key2" && !key2Read)
             {
-                throw std::runtime_error("Missing required fields");
+                char hash, c;
+                in >> hash >> c;
+                if (hash != '#' || c != 'c')
+                {
+                    in.setstate(std::ios::failbit);
+                    return in;
+                }
+
+                char openParen2;
+                in >> openParen2;
+                if (openParen2 != '(')
+                {
+                    in.setstate(std::ios::failbit);
+                    return in;
+                }
+
+                double real, imag;
+                in >> real >> imag;
+
+                char closeParen2;
+                in >> closeParen2;
+                if (closeParen2 != ')')
+                {
+                    in.setstate(std::ios::failbit);
+                    return in;
+                }
+
+                input.key2 = std::complex<double>(real, imag);
+                key2Read = true;
+            }
+            else if (label == "key3" && !key3Read)
+            {
+                char quote;
+                in >> quote;
+                if (quote != '"')
+                {
+                    in.setstate(std::ios::failbit);
+                    return in;
+                }
+                std::getline(in, input.key3, '"');
+                key3Read = true;
+            }
+            else
+            {
+                in.setstate(std::ios::failbit);
+                return in;
             }
 
-            dest = std::move(input);
+            while (isspace(in.peek())) in.get();
+
+            char next;
+            in >> next;
+            if (next == ':')
+            {
+                continue;
+            }
+            else if (next == ')')
+            {
+                break;
+            }
+            else
+            {
+                in.setstate(std::ios::failbit);
+                return in;
+            }
         }
-        catch (const std::exception&)
+
+        if (key1Read && key2Read && key3Read)
         {
-            in.clear();
-            in.seekg(pos);
+            dest = input;
+        }
+        else
+        {
             in.setstate(std::ios::failbit);
         }
 
