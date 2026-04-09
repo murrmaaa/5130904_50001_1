@@ -37,18 +37,9 @@ namespace nspace
 
         std::string token;
 
-        char c;
-        while (in.get(c))
-        {
-            if (c == ':' || std::isspace(c))
-            {
-                in.putback(c);
-                break;
-            }
-            token += c;
-        }
+        in >> token;
 
-        if (!in && token.empty())
+        if (!in))
             return in;
 
         if (token.size() >= 1 && token[0] == '0')
@@ -120,7 +111,13 @@ namespace nspace
         bool key1_read = false, key2_read = false, key3_read = false;
 
         in >> DelimiterIO{ '(' };
-        if (!in) return in;
+        if (!in)
+        {
+            in.clear();
+            in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            in.setstate(std::ios::failbit);
+            return in;
+        }
 
         // Читаем 3 поля (в любом порядке)
         for (int i = 0; i < 3; ++i)
