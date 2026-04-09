@@ -1,48 +1,100 @@
+#include "data_struct.h"
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <cctype>
+#include <complex>
+
+static std::string trim(const std::string& s) {
+    size_t start = s.find_first_not_of(" \t\n\r");
+    if (start == std::string::npos) return "";
+    size_t end = s.find_last_not_of(" \t\n\r");
+    return s.substr(start, end - start + 1);
+}
+
 std::istream& operator>>(std::istream& in, DataStruct& data) {
     std::string line;
-    std::getline(in, line);
-    if (!in) return in;
-
+    if (!std::getline(in, line)) {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
+    line = trim(line);
+    if (line.empty()) {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
+    // Удаляем внешние скобки, если они есть
+    if (line.size() >= 2 && line.front() == '(' && line.back() == ')') {
+        line = line.substr(1, line.size() - 2);
+        line = trim(line);
+        if (line.empty()) {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
+    }
+    // Лямбда для извлечения значения по ключу
     auto getValue = [&](const std::string& key) -> std::string {
-        size_t p = line.find(":" + key);
-        if (p == std::string::npos) return "";
-        p += key.size() + 1;
-        while (p < line.size() && line[p] == ' ') ++p;
-        size_t q = line.find(':', p);
-        if (q == std::string::npos) q = line.size();
-        return line.substr(p, q - p);
+        std::string search = ":" + key;
+        size_t pos = line.find(search);
+        if (pos == std::string::npos) return "";
+        pos += search.length();
+        while (pos < line.size() && std::isspace(static_cast<unsigned char>(line[pos]))) ++pos;
+        size_t end = line.find(':', pos);
+        if (end == std::string::npos) end = line.size();
+        return trim(line.substr(pos, end - pos));
     };
 
-    std::string v1 = getValue("key1");
-    std::string v2 = getValue("key2");
-    std::string v3 = getValue("key3");
-    if (v1.empty() || v2.empty() || v3.empty()) {
+    std::string key1_str = getValue("key1");
+    std::string key2_str = getValue("key2");
+    std::string key3_str = getValue("key3");
+
+    if (key1_str.empty() || key2_str.empty() || key3_str.empty()) {
         in.setstate(std::ios::failbit);
         return in;
     }
 
-    // key1
-    if (v1.size() >= 2 && v1.back() == 'L' && v1[v1.size()-2] == 'L')
-        v1 = v1.substr(0, v1.size()-2);
-    data.key1 = std::stoll(v1);
-
-    // key2: #c(real imag)
-    if (v2.substr(0,3) != "#c(" || v2.back() != ')') {
+    // Парсинг key1 (long long) с удалением суффикса LL
+    std::string k1 = key1_str;
+    if (k1.size() >= 2 && k1.back() == 'L' && k1[k1.size()-2] == 'L') {
+        k1.pop_back();
+        k1.pop_back();
+    }
+    try {
+        data.key1 = std::stoll(k1);
+    } catch (...) {
         in.setstate(std::ios::failbit);
         return in;
     }
-    std::string nums = v2.substr(3, v2.size()-4);
-    std::istringstream iss(nums);
-    double r, i;
-    iss >> r >> i;
-    data.key2 = {r, i};
 
-    // key3: "string"
-    if (v3.front() != '"' || v3.back() != '"') {
+    // Парсинг key2 (std::complex<double>) формат #c(real imag)
+    if (key2_str.size() < 5 || key2_str.substr(0,3) != "#c(" || key2_str.back() != ')') {
         in.setstate(std::ios::failbit);
         return in;
     }
-    data.key3 = v3.substr(1, v3.size()-2);
+    std::string numbers = key2_str.substr(3, key2_str.size() - 4);
+    std::istringstream iss(numbers);
+    double real, imag;
+    if (!(iss >> real >> imag)) {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
+    data.key2 = std::complex<double>(real, imag);
+
+    // Парсинг key3 (std::string) в двойных кавычках
+    if (key3_str.size() < 2 || key3_str.front() != '"' || key3_str.back() != '"') {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
+    data.key3 = key3_str.substr(1, key3_str.size() - 2);
 
     return in;
+}
+
+std::ostream& operator<<(std::ostream& out, const DataStruct& data) {
+    out << "(:key1 " << data.key1;
+    out << ":key2 #c(" << std::fixed << std::setprecision(1)
+        << data.key2.real() << " " << data.key2.imag() << ")";
+    out << ":key3 \"" << data.key3 << "\":)";
+    return out;
 }
