@@ -5,7 +5,6 @@
 #include <locale>
 #include <string>
 #include <vector>
-#include <sstream>
 
 struct DataStruct
 {
@@ -16,55 +15,70 @@ struct DataStruct
 
 bool parseLine(const std::string& input, DataStruct& out)
 {
-   if (input.empty()) return false;
-   
+   std::size_t i = 0;
    std::string s = input;
-   if (s.size() < 4 || s.front() != '(' || s.back() != ')') return false;
-   
-   std::string content = s.substr(2, s.size() - 4); 
-   std::stringstream ss(content);
-   std::string part;
-   
+
+   if (s.size() < 6 || s[i++] != '(' || s[i++] != ':') return false;
+
    bool has1 = false, has2 = false, has3 = false;
 
-   while (std::getline(ss, part, ':')) {
-      if (part.empty()) continue;
-      
-      std::stringstream ps(part);
-      std::string key;
-      ps >> key;
+   while (i < s.size()) {
+      while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i]))) i++;
 
-      if (key == "key1") {
-        std::string val;
-        ps >> val;
+      if (s.compare(i, 2, ":)") == 0) {
+        i += 2;
+        break;
+      }
+
+      std::size_t start = i;
+      while (i < s.size() && std::isalnum(static_cast<unsigned char>(s[i]))) i++;
+      std::string name = s.substr(start, i - start);
+
+      if (i < s.size() && s[i] == ' ') i++;
+
+      if (name == "key1") {
+        if (has1) return false;
+        std::size_t nextCol = s.find(':', i);
+        if (nextCol == std::string::npos) return false;
+        
+        std::string tok = s.substr(i, nextCol - i);
         try {
-           size_t suffix = val.find_first_not_of("0123456789-xXabcdefABCDEF");
-           if (suffix != std::string::npos) val = val.substr(0, suffix);
-           
-           out.key1 = std::stoull(val, nullptr, 0);
+           out.key1 = std::stoull(tok, nullptr, 0);
            has1 = true;
         } catch (...) { return false; }
+        i = nextCol;
       }
-      else if (key == "key2") {
-        char quote, ch, endQuote;
-        if (ps >> quote >> ch >> endQuote && quote == '\'' && endQuote == '\'') {
-           out.key2 = ch;
-           has2 = true;
-        } else return false;
+      else if (name == "key2") {
+        if (has2) return false;
+        std::size_t open = s.find('\'', i);
+        if (open == std::string::npos || open + 2 >= s.size() || s[open + 2] != '\'') return false;
+        out.key2 = s[open + 1];
+        i = open + 3;
+        has2 = true;
       }
-      else if (key == "key3") {
-        size_t start = part.find('"');
-        size_t end = part.find('"', start + 1);
-        if (start != std::string::npos && end != std::string::npos) {
-           out.key3 = part.substr(start + 1, end - start - 1);
-           has3 = true;
-        } else return false;
+      else if (name == "key3") {
+        if (has3) return false;
+        std::size_t open = s.find('"', i);
+        if (open == std::string::npos) return false;
+        std::size_t close = s.find('"', open + 1);
+        if (close == std::string::npos) return false;
+        
+        out.key3 = s.substr(open + 1, close - open - 1);
+        i = close + 1;
+        has3 = true;
+      }
+
+      if (i < s.size() && s[i] == ':') {
+        if (i + 1 < s.size() && s[i+1] == ')') {
+           i += 2;
+           break;
+        }
+        i++;
       }
    }
 
    return has1 && has2 && has3;
 }
-
 
 std::istream& operator>>(std::istream& in, DataStruct& v)
 {
