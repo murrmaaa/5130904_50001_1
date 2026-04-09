@@ -9,7 +9,7 @@ struct DelimiterIO {
     char exp;
 };
 
-struct ULLHexIO {
+struct ULLLitIO {
     unsigned long long& ref;
 };
 
@@ -26,7 +26,7 @@ struct LabelIO {
 };
 
 std::istream& operator>>(std::istream& in, DelimiterIO&& dest);
-std::istream& operator>>(std::istream& in, ULLHexIO&& dest);
+std::istream& operator>>(std::istream& in, ULLLitIO&& dest);
 std::istream& operator>>(std::istream& in, ComplexIO&& dest);
 std::istream& operator>>(std::istream& in, StringIO&& dest);
 std::istream& operator>>(std::istream& in, LabelIO&& dest);

@@ -7,10 +7,8 @@
 #include <algorithm>
 #include <stdexcept>
 
-std::string formatHexULL(unsigned long long value) {
-    std::ostringstream oss;
-    oss << "0x" << std::hex << std::uppercase << value;
-    return oss.str();
+std::string formatULLLit(unsigned long long value) {
+    return std::to_string(value) + "ull";
 }
 
 std::string formatComplex(const std::complex<double>& value) {
@@ -62,7 +60,7 @@ bool parseFromString(const std::string& line, DataStruct& dest) {
 
         if (key == "key1") {
             std::istringstream iss(value);
-            if (iss >> ULLHexIO{ temp.key1 }) {
+            if (iss >> ULLLitIO{ temp.key1 }) {
                 hasKey1 = true;
             } else {
                 throw std::runtime_error("Failed to parse key1");
@@ -117,7 +115,7 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& src) {
         return out;
     }
     iofmtguard fmtguard(out);
-    out << "(:key1 " << formatHexULL(src.key1)
+    out << "(:key1 " << formatULLLit(src.key1)
         << ":key2 " << formatComplex(src.key2)
         << ":key3 \"" << src.key3 << "\":)";
     return out;

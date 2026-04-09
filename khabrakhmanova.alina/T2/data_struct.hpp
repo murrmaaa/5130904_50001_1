@@ -16,7 +16,7 @@ struct DataStruct {
 std::istream& operator>>(std::istream& in, DataStruct& dest);
 std::ostream& operator<<(std::ostream& out, const DataStruct& src);
 bool parseFromString(const std::string& line, DataStruct& dest);
-std::string formatHexULL(unsigned long long value);
+std::string formatULLLit(unsigned long long value);
 std::string formatComplex(const std::complex<double>& value);
 
 #endif

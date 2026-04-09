@@ -16,7 +16,7 @@ std::istream& operator>>(std::istream& in, DelimiterIO&& dest) {
     return in;
 }
 
-std::istream& operator>>(std::istream& in, ULLHexIO&& dest) {
+std::istream& operator>>(std::istream& in, ULLLitIO&& dest) {
     std::istream::sentry sentry(in);
     if (!sentry) {
         return in;
@@ -26,17 +26,27 @@ std::istream& operator>>(std::istream& in, ULLHexIO&& dest) {
     if (!in) {
         return in;
     }
-    if (token.size() < 3 || token[0] != '0' || (token[1] != 'x' && token[1] != 'X')) {
+
+    // Удаляем суффикс u, U, ull, ULL
+    std::string numStr = token;
+    while (!numStr.empty() && (numStr.back() == 'u' || numStr.back() == 'U' || numStr.back() == 'l' || numStr.back() == 'L')) {
+        numStr.pop_back();
+    }
+    if (numStr.empty()) {
         in.setstate(std::ios::failbit);
         return in;
     }
-    std::string hexStr = token.substr(2);
-    if (hexStr.empty()) {
-        in.setstate(std::ios::failbit);
-        return in;
+
+    // Проверяем, что все символы цифры
+    for (char c : numStr) {
+        if (!std::isdigit(static_cast<unsigned char>(c))) {
+            in.setstate(std::ios::failbit);
+            return in;
+        }
     }
+
     try {
-        dest.ref = std::stoull(hexStr, nullptr, 16);
+        dest.ref = std::stoull(numStr);
         return in;
     } catch (...) {
         in.setstate(std::ios::failbit);
