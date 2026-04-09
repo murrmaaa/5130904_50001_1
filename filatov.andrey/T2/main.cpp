@@ -2,12 +2,19 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <sstream>
 #include "data_struct.h"
 
 int main() {
     std::vector<DataStruct> vec;
-    std::istream_iterator<DataStruct> in_iter(std::cin), eof;
-    std::copy(in_iter, eof, std::back_inserter(vec));
+    std::string line;
+    while (std::getline(std::cin, line)) {
+        std::istringstream iss(line);
+        DataStruct temp;
+        if (iss >> temp) {
+            vec.push_back(temp);
+        }
+    }
 
     std::sort(vec.begin(), vec.end(),
         [](const DataStruct& a, const DataStruct& b) {
