@@ -1,182 +1,147 @@
 #include "DataStruct.h"
 #include <iomanip>
-#include <limits>
+#include <sstream>
+#include <cctype>
+#include <vector>
 
 namespace nspace
 {
-    Iofmtguard::Iofmtguard(std::basic_ios<char>& s)
-        : s_(s), width_(s.width()), fill_(s.fill()), precision_(s.precision()), fmt_(s.flags()) {}
-
-    Iofmtguard::~Iofmtguard()
+    // Парсинг восьмеричного числа (формат: 076, 01001)
+    bool parseOct(const std::string& value, unsigned long long& result)
     {
-        s_.width(width_);
-        s_.fill(fill_);
-        s_.precision(precision_);
-        s_.flags(fmt_);
-    }
-
-    // Чтение разделителя
-    std::istream& operator>>(std::istream& in, DelimiterIO&& dest)
-    {
-        std::istream::sentry sentry(in);
-        if (!sentry)
-            return in;
-
-        char c;
-        in >> c;
-        if (in && c != dest.exp)
-            in.setstate(std::ios::failbit);
-        return in;
-    }
-
-    // Чтение восьмеричного числа (формат: 076, 01001)
-    std::istream& operator>>(std::istream& in, OctIO&& dest)
-    {
-        std::istream::sentry sentry(in);
-        if (!sentry)
-            return in;
-
-        std::string token;
-
-        in >> token;
-
-        if (!in)
-            return in;
-
-        if (token.size() >= 1 && token[0] == '0')
+        if (value.empty() || value[0] != '0')
+            return false;
+        for (char c : value)
         {
-            for (char ch : token)
-            {
-                if (ch < '0' || ch > '7')
-                {
-                    in.setstate(std::ios::failbit);
-                    return in;
-                }
-            }
-            dest.ref = std::stoull(token, nullptr, 8);
+            if (c < '0' || c > '7')
+                return false;
         }
-        else
-        {
-            in.setstate(std::ios::failbit);
-        }
-
-        return in;
+        result = std::stoull(value, nullptr, 8);
+        return true;
     }
 
-    // Чтение комплексного числа
-    std::istream& operator>>(std::istream& in, ComplexIO&& dest)
+    // Парсинг комплексного числа (формат: #c(1.0 -1.0))
+    bool parseComplex(const std::string& value, std::complex<double>& result)
     {
-        std::istream::sentry sentry(in);
-        if (!sentry)
-            return in;
-
+        if (value.size() < 5 || value.substr(0, 3) != "#c(" || value.back() != ')')
+            return false;
+        std::string inner = value.substr(3, value.size() - 4);
+        std::istringstream iss(inner);
         double real, imag;
-        in >> DelimiterIO{ '#' } >> DelimiterIO{ 'c' } >> DelimiterIO{ '(' }
-           >> real >> imag >> DelimiterIO{ ')' };
-
-        if (in)
-            dest.ref = std::complex<double>(real, imag);
-        return in;
+        if (!(iss >> real >> imag))
+            return false;
+        result = std::complex<double>(real, imag);
+        return true;
     }
 
-    // Чтение строки в кавычках
-    std::istream& operator>>(std::istream& in, StringIO&& dest)
+    // Парсинг строки в кавычках
+    bool parseString(const std::string& value, std::string& result)
     {
-        std::istream::sentry sentry(in);
-        if (!sentry)
-            return in;
-
-        return std::getline(in >> DelimiterIO{ '"' }, dest.ref, '"');
+        if (value.size() < 2 || value[0] != '"' || value.back() != '"')
+            return false;
+        result = value.substr(1, value.size() - 2);
+        return true;
     }
 
-    // Чтение и проверка метки
-    std::istream& operator>>(std::istream& in, LabelIO&& dest)
+    // Парсинг одной записи
+    bool parseLine(const std::string& line, DataStruct& dest)
     {
-        std::istream::sentry sentry(in);
-        if (!sentry)
-            return in;
+        if (line.empty() || line[0] != '(' || line.back() != ')')
+            return false;
 
-        std::string data;
-        if ((in >> StringIO{ data }) && data != dest.exp)
-            in.setstate(std::ios::failbit);
-        return in;
+        std::string content = line.substr(1, line.size() - 2);
+
+        // Разбиваем на токены по символу ':' (но не внутри кавычек)
+        std::vector<std::string> tokens;
+        std::string current;
+        bool inQuotes = false;
+
+        for (char c : content)
+        {
+            if (c == '"')
+            {
+                inQuotes = !inQuotes;
+                current += c;
+                continue;
+            }
+            if (!inQuotes && c == ':')
+            {
+                if (!current.empty())
+                {
+                    tokens.push_back(current);
+                    current.clear();
+                }
+                continue;
+            }
+            current += c;
+        }
+        if (!current.empty())
+            tokens.push_back(current);
+
+        DataStruct temp;
+        bool hasKey1 = false, hasKey2 = false, hasKey3 = false;
+
+        for (const auto& token : tokens)
+        {
+            size_t spacePos = token.find_first_of(" \t");
+            if (spacePos == std::string::npos)
+                continue;
+
+            std::string key = token.substr(0, spacePos);
+            std::string value = token.substr(spacePos + 1);
+
+            if (key == "key1")
+            {
+                if (parseOct(value, temp.key1))
+                    hasKey1 = true;
+            }
+            else if (key == "key2")
+            {
+                if (parseComplex(value, temp.key2))
+                    hasKey2 = true;
+            }
+            else if (key == "key3")
+            {
+                if (parseString(value, temp.key3))
+                    hasKey3 = true;
+            }
+        }
+
+        if (hasKey1 && hasKey2 && hasKey3)
+        {
+            dest = temp;
+            return true;
+        }
+        return false;
     }
 
-    // Чтение всей структуры
+    // Оператор чтения
     std::istream& operator>>(std::istream& in, DataStruct& dest)
     {
-        std::istream::sentry sentry(in);
-        if (!sentry) return in;
-
-        DataStruct input;
-        bool key1_read = false, key2_read = false, key3_read = false;
-
-        in >> DelimiterIO{ '(' };
-        if (!in)
+        std::string line;
+        while (std::getline(in, line))
         {
-            in.clear();
-            in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            in.setstate(std::ios::failbit);
-            return in;
-        }
+            if (line.empty())
+                continue;
 
-        // Читаем 3 поля (в любом порядке)
-        for (int i = 0; i < 3; ++i)
-        {
-            in >> DelimiterIO{ ':' };
-            if (!in) return in;
-
-            std::string label;
-            in >> label;
-            if (!in) return in;
-
-            if (label == "key1")
+            DataStruct temp;
+            if (parseLine(line, temp))
             {
-                in >> OctIO{ input.key1 };
-                key1_read = true;
-            }
-            else if (label == "key2")
-            {
-                in >> ComplexIO{ input.key2 };
-                key2_read = true;
-            }
-            else if (label == "key3")
-            {
-                in >> StringIO{ input.key3 };
-                key3_read = true;
-            }
-            else
-            {
-                in.setstate(std::ios::failbit);
+                dest = temp;
                 return in;
             }
-
-            if (!in) return in;
         }
-
-        // Читаем двоеточие перед закрывающей скобкой
-        in >> DelimiterIO{ ':' };
-        // Читаем закрывающую скобку
-        in >> DelimiterIO{ ')' };
-
-        if (key1_read && key2_read && key3_read)
-            dest = std::move(input);
-        else
-            in.setstate(std::ios::failbit);
-
+        in.setstate(std::ios::failbit);
         return in;
     }
 
-    // Вывод DataStruct
+    // Оператор вывода
     std::ostream& operator<<(std::ostream& out, const DataStruct& src)
     {
-        Iofmtguard guard(out);
-
-        out << "(:key1 " << std::oct << src.key1 << ":"
-            << "key2 #c(" << std::fixed << std::setprecision(1)
-            << src.key2.real() << " " << src.key2.imag() << "):"
-            << "key3 \"" << src.key3 << "\":)";
-
+        out << "(:key1 0" << std::oct << src.key1
+            << ":key2 #c(" << std::fixed << std::setprecision(1)
+            << src.key2.real() << " " << src.key2.imag() << "):key3 \""
+            << src.key3 << "\":)";
         return out;
     }
 }
