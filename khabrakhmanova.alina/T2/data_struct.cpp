@@ -36,7 +36,7 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
 
         size_t hex_pos = line.find("0x", key1_pos);
         if (hex_pos == std::string::npos) {
-            throw std::runtime_error("0x not found for key1");
+            throw std::runtime_error("0x not found");
         }
 
         std::string hex_str;
@@ -46,11 +46,11 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
             i++;
         }
         if (hex_str.empty()) {
-            throw std::runtime_error("Empty hex number");
+            throw std::runtime_error("Empty hex");
         }
         temp.key1 = std::stoull(hex_str, nullptr, 16);
 
-        // Парсим key2 (#c(...))
+        // Парсим key2 (#c(real imag))
         size_t key2_pos = line.find("key2");
         if (key2_pos == std::string::npos) {
             throw std::runtime_error("key2 not found");
@@ -58,23 +58,34 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
 
         size_t complex_pos = line.find("#c(", key2_pos);
         if (complex_pos == std::string::npos) {
-            throw std::runtime_error("#c( not found for key2");
+            throw std::runtime_error("#c( not found");
         }
 
         size_t open_paren = complex_pos + 3;
         size_t close_paren = line.find(")", open_paren);
         if (close_paren == std::string::npos) {
-            throw std::runtime_error("Closing ) not found");
+            throw std::runtime_error(") not found");
         }
 
         std::string complex_content = line.substr(open_paren, close_paren - open_paren);
+
+        // Парсим real и imag - они могут быть любыми числами
+        std::string real_str, imag_str;
         size_t space_pos = complex_content.find(' ');
         if (space_pos == std::string::npos) {
-            throw std::runtime_error("Space not found in complex");
+            throw std::runtime_error("Space not found");
         }
+        real_str = complex_content.substr(0, space_pos);
+        imag_str = complex_content.substr(space_pos + 1);
 
-        double real = std::stod(complex_content.substr(0, space_pos));
-        double imag = std::stod(complex_content.substr(space_pos + 1));
+        // Удаляем лишние пробелы
+        while (!real_str.empty() && std::isspace(real_str.front())) real_str.erase(0, 1);
+        while (!real_str.empty() && std::isspace(real_str.back())) real_str.pop_back();
+        while (!imag_str.empty() && std::isspace(imag_str.front())) imag_str.erase(0, 1);
+        while (!imag_str.empty() && std::isspace(imag_str.back())) imag_str.pop_back();
+
+        double real = std::stod(real_str);
+        double imag = std::stod(imag_str);
         temp.key2 = std::complex<double>(real, imag);
 
         // Парсим key3 ("...")
@@ -98,7 +109,7 @@ std::istream& operator>>(std::istream& in, DataStruct& dest) {
         dest = temp;
         return in;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception&) {
         in.setstate(std::ios::failbit);
         return in;
     }
