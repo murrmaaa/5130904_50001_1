@@ -163,7 +163,7 @@ int main()
 
   if (data.empty())
   {
-    if (hadInput)
+    if (std::cin.eof())
     {
       std::cout << "Looks like there is no supported record. Cannot determine input. Test skipped\n";
     }
