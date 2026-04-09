@@ -15,92 +15,90 @@ struct DataStruct
 
 bool parseLine(const std::string &input, DataStruct &out)
 {
-  std::size_t i = 0;
   std::string s = input;
+  if (s.size() < 4 || s.front() != '(' || s.back() != ')')
+    return false;
 
-  if (s.size() < 6 || s[i++] != '(' || s[i++] != ':')
+  std::size_t i = 0;
+  if (s[i++] != '(' || s[i++] != ':')
     return false;
 
   bool has1 = false, has2 = false, has3 = false;
 
   while (i < s.size())
   {
-    while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i])))
-      i++;
-
-    if (s.compare(i, 2, ":)") == 0)
-    {
-      i += 2;
+    std::size_t sp = s.find(' ', i);
+    if (sp == std::string::npos)
       break;
-    }
-
-    std::size_t start = i;
-    while (i < s.size() && std::isalnum(static_cast<unsigned char>(s[i])))
-      i++;
-    std::string name = s.substr(start, i - start);
-
-    if (i < s.size() && s[i] == ' ')
-      i++;
+    std::string name = s.substr(i, sp - i);
+    i = sp + 1;
 
     if (name == "key1")
     {
       if (has1)
         return false;
-      std::size_t nextCol = s.find(':', i);
-      if (nextCol == std::string::npos)
+      std::size_t col = s.find(':', i);
+      if (col == std::string::npos)
         return false;
+      std::string tok = s.substr(i, col - i);
 
-      std::string tok = s.substr(i, nextCol - i);
       try
       {
-        out.key1 = std::stoull(tok, nullptr, 0);
+        std::size_t pos = 0;
+        unsigned long long v = std::stoull(tok, &pos, 8);
+        if (pos != tok.size())
+          return false;
+        out.key1 = v;
         has1 = true;
       }
       catch (...)
       {
         return false;
       }
-      i = nextCol;
+      i = col + 1;
     }
     else if (name == "key2")
     {
       if (has2)
         return false;
-      std::size_t open = s.find('\'', i);
-      if (open == std::string::npos || open + 2 >= s.size() || s[open + 2] != '\'')
+      if (i + 2 >= s.size() || s[i] != '\'' || s[i + 2] != '\'')
         return false;
-      out.key2 = s[open + 1];
-      i = open + 3;
+      out.key2 = s[i + 1];
+      i += 3;
+      if (i < s.size() && s[i] == ':')
+        i++;
+      else
+        return false;
       has2 = true;
     }
     else if (name == "key3")
     {
       if (has3)
         return false;
-      std::size_t open = s.find('"', i);
-      if (open == std::string::npos)
+      if (i >= s.size() || s[i] != '"')
         return false;
-      std::size_t close = s.find('"', open + 1);
-      if (close == std::string::npos)
+      std::size_t endq = s.find('"', i + 1);
+      if (endq == std::string::npos)
         return false;
-
-      out.key3 = s.substr(open + 1, close - open - 1);
-      i = close + 1;
+      out.key3 = s.substr(i + 1, endq - i - 1);
+      i = endq + 1;
+      if (i < s.size() && s[i] == ':')
+        i++;
+      else
+        return false;
       has3 = true;
     }
+    else
+      return false;
 
-    if (i < s.size() && s[i] == ':')
+    if (i < s.size() && s[i] == ')')
     {
-      if (i + 1 < s.size() && s[i + 1] == ')')
-      {
-        i += 2;
-        break;
-      }
       i++;
+      break;
     }
   }
 
-  return has1 && has2 && has3;
+  return (has1 && has2 && has3);
 }
 
 std::istream &operator>>(std::istream &in, DataStruct &v)
