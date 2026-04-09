@@ -36,19 +36,19 @@ bool parseLine(const std::string& input, DataStruct& out)
 
       if (i < s.size() && s[i] == ' ') i++;
 
-      if (name == "key1") {
+      if (name == "key1"){
         if (has1) return false;
         std::size_t nextCol = s.find(':', i);
         if (nextCol == std::string::npos) return false;
         
         std::string tok = s.substr(i, nextCol - i);
-        try {
+        try{
            out.key1 = std::stoull(tok, nullptr, 0);
            has1 = true;
         } catch (...) { return false; }
         i = nextCol;
       }
-      else if (name == "key2") {
+      else if (name == "key2"){
         if (has2) return false;
         std::size_t open = s.find('\'', i);
         if (open == std::string::npos || open + 2 >= s.size() || s[open + 2] != '\'') return false;
@@ -56,7 +56,7 @@ bool parseLine(const std::string& input, DataStruct& out)
         i = open + 3;
         has2 = true;
       }
-      else if (name == "key3") {
+      else if (name == "key3"){
         if (has3) return false;
         std::size_t open = s.find('"', i);
         if (open == std::string::npos) return false;
@@ -68,8 +68,8 @@ bool parseLine(const std::string& input, DataStruct& out)
         has3 = true;
       }
 
-      if (i < s.size() && s[i] == ':') {
-        if (i + 1 < s.size() && s[i+1] == ')') {
+      if (i < s.size() && s[i] == ':'){
+        if (i + 1 < s.size() && s[i+1] == ')'){
            i += 2;
            break;
         }
