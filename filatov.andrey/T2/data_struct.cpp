@@ -1,10 +1,8 @@
 #include "data_struct.h"
-#include <iostream>
-#include <string>
 #include <sstream>
+#include <string>
 #include <iomanip>
 #include <cctype>
-#include <complex>
 
 static std::string trim(const std::string& s) {
     size_t start = s.find_first_not_of(" \t\n\r");
@@ -13,34 +11,15 @@ static std::string trim(const std::string& s) {
     return s.substr(start, end - start + 1);
 }
 
-// Проверка, что строка — целое число в формате SLL LIT
-static bool isInteger(const std::string& s) {
-    if (s.empty()) return false;
-    size_t i = 0;
-    if (s[0] == '-') i = 1;
-    if (i >= s.size() || !std::isdigit(static_cast<unsigned char>(s[i])))
-        return false;
-    while (i < s.size() && std::isdigit(static_cast<unsigned char>(s[i])))
-        ++i;
-    // Разрешаем суффикс LL или ll (без учёта регистра)
-    if (i + 2 == s.size() &&
-        (s[i] == 'L' || s[i] == 'l') &&
-        (s[i+1] == 'L' || s[i+1] == 'l'))
-        i += 2;
-    return i == s.size();
-}
-
-// Проверка формата комплексного числа #c(real imag)
-static bool isComplex(const std::string& s) {
-    if (s.size() < 5) return false;
-    if (s.substr(0,3) != "#c(" || s.back() != ')') return false;
-    std::string inner = s.substr(3, s.size() - 4);
-    std::istringstream iss(inner);
-    double r, i;
-    if (!(iss >> r >> i)) return false;
-    char ch;
-    if (iss >> ch) return false;
-    return true;
+static std::string extractValue(const std::string& str, const std::string& key) {
+    std::string search = ":" + key;
+    size_t pos = str.find(search);
+    if (pos == std::string::npos) return "";
+    pos += search.length();
+    while (pos < str.size() && std::isspace(static_cast<unsigned char>(str[pos]))) ++pos;
+    size_t end = str.find(':', pos);
+    if (end == std::string::npos) end = str.size();
+    return trim(str.substr(pos, end - pos));
 }
 
 std::istream& operator>>(std::istream& in, DataStruct& data) {
@@ -54,40 +33,20 @@ std::istream& operator>>(std::istream& in, DataStruct& data) {
         in.setstate(std::ios::failbit);
         return in;
     }
-    // Удаляем внешние скобки, если они есть
     if (line.size() >= 2 && line.front() == '(' && line.back() == ')') {
         line = line.substr(1, line.size() - 2);
         line = trim(line);
-        if (line.empty()) {
-            in.setstate(std::ios::failbit);
-            return in;
-        }
     }
-    // Лямбда для извлечения значения по ключу
-    auto getValue = [&](const std::string& key) -> std::string {
-        std::string search = ":" + key;
-        size_t pos = line.find(search);
-        if (pos == std::string::npos) return "";
-        pos += search.length();
-        while (pos < line.size() &&
-               std::isspace(static_cast<unsigned char>(line[pos])))
-            ++pos;
-        size_t end = line.find(':', pos);
-        if (end == std::string::npos) end = line.size();
-        return trim(line.substr(pos, end - pos));
-    };
+    std::string key1_str = extractValue(line, "key1");
+    std::string key2_str = extractValue(line, "key2");
+    std::string key3_str = extractValue(line, "key3");
 
-    std::string key1_str = getValue("key1");
-    std::string key2_str = getValue("key2");
-    std::string key3_str = getValue("key3");
-
-    if (key1_str.empty() || key2_str.empty() || key3_str.empty() ||
-        !isInteger(key1_str) || !isComplex(key2_str)) {
+    if (key1_str.empty() || key2_str.empty() || key3_str.empty()) {
         in.setstate(std::ios::failbit);
         return in;
     }
 
-    // Парсинг key1 (удаляем суффикс ll/LL)
+    // key1: удаляем суффикс ll/LL
     std::string k1 = key1_str;
     if (k1.size() >= 2 &&
         (k1.back() == 'L' || k1.back() == 'l') &&
@@ -102,7 +61,11 @@ std::istream& operator>>(std::istream& in, DataStruct& data) {
         return in;
     }
 
-    // Парсинг key2
+    // key2: #c(real imag)
+    if (key2_str.size() < 5 || key2_str.substr(0,3) != "#c(" || key2_str.back() != ')') {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
     std::string numbers = key2_str.substr(3, key2_str.size() - 4);
     std::istringstream iss(numbers);
     double real, imag;
@@ -112,9 +75,8 @@ std::istream& operator>>(std::istream& in, DataStruct& data) {
     }
     data.key2 = std::complex<double>(real, imag);
 
-    // Парсинг key3
-    if (key3_str.size() < 2 || key3_str.front() != '"' ||
-        key3_str.back() != '"') {
+    // key3: "string"
+    if (key3_str.size() < 2 || key3_str.front() != '"' || key3_str.back() != '"') {
         in.setstate(std::ios::failbit);
         return in;
     }
