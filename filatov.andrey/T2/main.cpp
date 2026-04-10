@@ -3,21 +3,22 @@
 #include <algorithm>
 #include <iterator>
 #include <sstream>
-#include <string>
 #include "data_struct.h"
+
+bool tryParse(const std::string& line, DataStruct& out) {
+    std::istringstream iss(line);
+    return !!(iss >> out);
+}
 
 int main() {
     std::vector<DataStruct> vec;
-    std::string line;
-    while (std::getline(std::cin, line)) {
-        std::istringstream iss(line);
+    std::istream_iterator<std::string> in_iter(std::cin), eof;
+    std::for_each(in_iter, eof, [&](const std::string& line) {
         DataStruct temp;
-        if (iss >> temp) {
+        if (tryParse(line, temp)) {
             vec.push_back(temp);
-        } else {
-            std::cerr << "Failed to parse: " << line << std::endl;
         }
-    }
+    });
 
     if (vec.empty()) {
         std::cout << "Looks like there is no supported record. Cannot determine input. Test skipped\n";
