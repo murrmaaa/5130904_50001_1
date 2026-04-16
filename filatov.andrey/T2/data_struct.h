@@ -1,17 +1,17 @@
 #ifndef DATA_STRUCT_H
 #define DATA_STRUCT_H
 
-#include <iostream>
-#include <string>
 #include <complex>
+#include <string>
+#include <iosfwd>
 
 struct DataStruct {
-    long long key1;
-    std::complex<double> key2;
+    long long key1;                    // SLL LIT
+    std::complex<double> key2;         // CMP LSP
     std::string key3;
 };
 
-std::istream& operator>>(std::istream& in, DataStruct& data);
-std::ostream& operator<<(std::ostream& out, const DataStruct& data);
+std::istream& operator>>(std::istream& is, DataStruct& ds);
+std::ostream& operator<<(std::ostream& os, const DataStruct& ds);
 
-#endif
+#endif // DATA_STRUCT_H
