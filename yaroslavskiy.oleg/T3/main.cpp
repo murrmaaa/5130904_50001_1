@@ -1,5 +1,5 @@
 ﻿
-// Yaroskavsky Oleg 5130904 / 50001 T3
+// Yaroslavsky Oleg 5130904 / 50001 T3
 
 #include <iostream>
 #include <fstream>
@@ -11,10 +11,13 @@
 #include <numeric>
 #include <iomanip>
 #include <cmath>
+#include <map>
+#include <cctype>
 
 using namespace std::placeholders;
 
 struct Point {
+
     int x, y;
 
     bool operator==(const Point& other) const {
@@ -24,9 +27,11 @@ struct Point {
     bool operator!=(const Point& other) const {
         return !(*this == other);
     }
+
 };
 
 struct Polygon {
+
     std::vector<Point> points;
 
     bool operator==(const Polygon& other) const {
@@ -46,13 +51,12 @@ struct Polygon {
         return sorted1 == sorted2;
     }
 
+
     bool exactMatch(const Polygon& other) const {
         if (points.size() != other.points.size()) return false;
-        for (size_t i = 0; i < points.size(); ++i) {
-            if (points[i] != other.points[i]) return false;
-        }
-        return true;
+        return std::equal(points.begin(), points.end(), other.points.begin());
     }
+
 };
 
 double triangleArea(const Point& a, const Point& b, const Point& c) {
@@ -109,86 +113,13 @@ std::vector<Polygon> readPolygons(const std::string& filename) {
             poly.points.push_back({ x, y });
         }
 
-
         if (valid && poly.points.size() == static_cast<size_t>(vertexCount)) {
             polygons.push_back(poly);
         }
     }
 
     return polygons;
-}
 
-
-int countPermutations(const std::vector<Polygon>& polygons, const Polygon& target) {
-    return std::count_if(polygons.begin(), polygons.end(),
-        std::bind(std::equal_to<bool>(),
-            std::bind(std::equal_to<Polygon>(), _1, target),
-            std::bind(std::logical_not<bool>(), std::bind(std::equal_to<bool>(), false, false))));
-
-}
-
-struct IsPermutationOf {
-    const Polygon& target;
-    IsPermutationOf(const Polygon& t) : target(t) {}
-
-    bool operator()(const Polygon& p) const {
-        return p == target;
-    }
-};
-
-int countPermutationsBind(const std::vector<Polygon>& polygons, const Polygon& target) {
-    return std::count_if(polygons.begin(), polygons.end(),
-        std::bind(std::equal_to<Polygon>(), _1, target));
-}
-
-struct ExactMatchWith {
-    const Polygon& target;
-    ExactMatchWith(const Polygon& t) : target(t) {}
-
-    bool operator()(const Polygon& p) const {
-        return p.exactMatch(target);
-    }
-};
-
-int maxSequence(const std::vector<Polygon>& polygons, const Polygon& target) {
-    if (polygons.empty()) return 0;
-
-    int maxLen = 0;
-    int currentLen = 0;
-
-    for (const auto& poly : polygons) {
-        if (poly.exactMatch(target)) {
-            currentLen++;
-            maxLen = std::max(maxLen, currentLen);
-        }
-        else {
-            currentLen = 0;
-        }
-    }
-
-    return maxLen;
-}
-
-int maxSequenceAlgorithms(const std::vector<Polygon>& polygons, const Polygon& target) {
-    if (polygons.empty()) return 0;
-
-    std::vector<int> matchFlags(polygons.size());
-    std::transform(polygons.begin(), polygons.end(), matchFlags.begin(),
-        std::bind(std::equal_to<bool>(),
-            std::bind(&Polygon::exactMatch, _1, target),
-            std::bind(std::logical_not<bool>(), std::bind(std::equal_to<bool>(), false, false))));
-
-    int maxLen = 0, curr = 0;
-    for (bool match : matchFlags) {
-        if (match) {
-            curr++;
-            maxLen = std::max(maxLen, curr);
-        }
-        else {
-            curr = 0;
-        }
-    }
-    return maxLen;
 }
 
 bool parsePolygon(const std::string& str, Polygon& poly) {
@@ -224,7 +155,132 @@ void processCommands(std::vector<Polygon>& polygons) {
         std::string command;
         iss >> command;
 
-        if (command == "PERMS") {
+        if (command == "COUNT") {
+            std::string param;
+            iss >> param;
+
+            if (param == "EVEN") {
+                int count = std::count_if(polygons.begin(), polygons.end(),
+                    [](const Polygon& p) { return p.points.size() % 2 == 0; });
+                std::cout << count << std::endl;
+            }
+            else if (param == "ODD") {
+                int count = std::count_if(polygons.begin(), polygons.end(),
+                    [](const Polygon& p) { return p.points.size() % 2 == 1; });
+                std::cout << count << std::endl;
+            }
+            else {
+                int vertexCount = std::stoi(param);
+                int count = std::count_if(polygons.begin(), polygons.end(),
+                    [vertexCount](const Polygon& p) { return p.points.size() == static_cast<size_t>(vertexCount); });
+                std::cout << count << std::endl;
+            }
+        }
+
+
+
+        else if (command == "AREA") {
+            std::string param;
+            iss >> param;
+
+            if (param == "MEAN") {
+                if (polygons.empty()) {
+                    std::cout << "0.0" << std::endl;
+                }
+                else {
+                    double sum = std::accumulate(polygons.begin(), polygons.end(), 0.0,
+                        [](double acc, const Polygon& p) { return acc + polygonArea(p); });
+                    double mean = sum / polygons.size();
+                    std::cout << std::fixed << std::setprecision(1) << mean << std::endl;
+                }
+            }
+
+            else if (param == "EVEN") {
+                double sum = std::accumulate(polygons.begin(), polygons.end(), 0.0,
+                    [](double acc, const Polygon& p) {
+                        return acc + (p.points.size() % 2 == 0 ? polygonArea(p) : 0.0);
+                    });
+                std::cout << std::fixed << std::setprecision(1) << sum << std::endl;
+            }
+            else if (param == "ODD") {
+                double sum = std::accumulate(polygons.begin(), polygons.end(), 0.0,
+                    [](double acc, const Polygon& p) {
+                        return acc + (p.points.size() % 2 == 1 ? polygonArea(p) : 0.0);
+                    });
+                std::cout << std::fixed << std::setprecision(1) << sum << std::endl;
+            }
+            else {
+
+                int vertexCount = std::stoi(param);
+                double sum = std::accumulate(polygons.begin(), polygons.end(), 0.0,
+                    [vertexCount](double acc, const Polygon& p) {
+                        return acc + (p.points.size() == static_cast<size_t>(vertexCount) ? polygonArea(p) : 0.0);
+                    });
+                std::cout << std::fixed << std::setprecision(1) << sum << std::endl;
+            }
+        }
+
+
+        else if (command == "MAX") {
+            std::string param;
+            iss >> param;
+
+            if (polygons.empty()) {
+                if (param == "AREA") std::cout << "0.0" << std::endl;
+                else std::cout << "0" << std::endl;
+                continue;
+            }
+
+            if (param == "AREA") {
+                auto maxIt = std::max_element(polygons.begin(), polygons.end(),
+                    [](const Polygon& a, const Polygon& b) {
+                        return polygonArea(a) < polygonArea(b);
+                    });
+                std::cout << std::fixed << std::setprecision(1) << polygonArea(*maxIt) << std::endl;
+            }
+            else if (param == "VERTEXES") {
+                auto maxIt = std::max_element(polygons.begin(), polygons.end(),
+                    [](const Polygon& a, const Polygon& b) {
+                        return a.points.size() < b.points.size();
+                    });
+                std::cout << maxIt->points.size() << std::endl;
+            }
+            else {
+                std::cout << "<INVALID COMMAND>" << std::endl;
+            }
+        }
+
+        else if (command == "MIN") {
+            std::string param;
+            iss >> param;
+
+            if (polygons.empty()) {
+                if (param == "AREA") std::cout << "0.0" << std::endl;
+                else std::cout << "0" << std::endl;
+                continue;
+            }
+
+            if (param == "AREA") {
+                auto minIt = std::min_element(polygons.begin(), polygons.end(),
+                    [](const Polygon& a, const Polygon& b) {
+                        return polygonArea(a) < polygonArea(b);
+                    });
+                std::cout << std::fixed << std::setprecision(1) << polygonArea(*minIt) << std::endl;
+            }
+            else if (param == "VERTEXES") {
+                auto minIt = std::min_element(polygons.begin(), polygons.end(),
+                    [](const Polygon& a, const Polygon& b) {
+                        return a.points.size() < b.points.size();
+                    });
+                std::cout << minIt->points.size() << std::endl;
+            }
+            else {
+                std::cout << "<INVALID COMMAND>" << std::endl;
+            }
+        }
+
+
+        else if (command == "PERMS") {
             std::string polygonStr;
             std::getline(iss, polygonStr);
             size_t start = polygonStr.find_first_not_of(" \t");
@@ -241,8 +297,9 @@ void processCommands(std::vector<Polygon>& polygons) {
             int count = std::count_if(polygons.begin(), polygons.end(),
                 std::bind(std::equal_to<Polygon>(), _1, target));
             std::cout << count << std::endl;
-
         }
+
+
         else if (command == "MAXSEQ") {
             std::string polygonStr;
             std::getline(iss, polygonStr);
@@ -271,8 +328,8 @@ void processCommands(std::vector<Polygon>& polygons) {
             }
 
             std::cout << maxLen << std::endl;
-
         }
+
         else {
             std::cout << "<INVALID COMMAND>" << std::endl;
         }
@@ -281,7 +338,6 @@ void processCommands(std::vector<Polygon>& polygons) {
 
 
 int main(int argc, char* argv[]) {
-
     setlocale(LC_ALL, "Russian");
 
     if (argc != 2) {
@@ -290,11 +346,12 @@ int main(int argc, char* argv[]) {
     }
 
     std::string filename = argv[1];
-
     std::vector<Polygon> polygons = readPolygons(filename);
-
     processCommands(polygons);
 
     return EXIT_SUCCESS;
+
 }
+
+
 
