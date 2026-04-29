@@ -16,40 +16,36 @@ struct Point {
     int x;
     int y;
     Point() : x(0), y(0) {}
-    Point(int x_, int y_) : x(x_), y(y_) {}
-    bool operator==(const Point& other) const {
-        return x == other.x && y == other.y;
-    }
 };
 std::istream& operator>>(std::istream& is, Point& p) {
     char open, comma, close;
-    int x_val = 0, y_val = 0;
+    p.x = 0;
+    p.y = 0;
     is >> open;
     if (open != '(') {
         is.setstate(std::ios::failbit);
-        p = Point();
         return is;
     }
-    is >> x_val;
+    is >> p.x;
     is >> comma;
     if (comma != ';') {
         is.setstate(std::ios::failbit);
-        p = Point();
         return is;
     }
-    is >> y_val;
+    is >> p.y;
     is >> close;
     if (close != ')') {
         is.setstate(std::ios::failbit);
-        p = Point();
         return is;
     }
-    p = Point(x_val, y_val);
     return is;
 }
 std::ostream& operator<<(std::ostream& os, const Point& p) {
     os << "(" << p.x << ";" << p.y << ")";
     return os;
+}
+bool operator==(const Point& a, const Point& b) {
+    return a.x == b.x && a.y == b.y;
 }
 struct Polygon {
     std::vector<Point> points;
@@ -67,7 +63,6 @@ struct Polygon {
     size_t vertexCount() const {
         return points.size();
     }
-    bool operator==(const Polygon& other) const;
 };
 std::istream& operator>>(std::istream& is, Polygon& poly) {
     size_t numPoints;
@@ -137,10 +132,6 @@ bool isSameShape(const Polygon& a, const Polygon& b) {
         if (match) return true;
     }
     return false;
-}
-bool Polygon::operator==(const Polygon& other) const {
-    if (points.size() != other.points.size()) return false;
-    return isSameShape(*this, other);
 }
 }
 class CommandProcessor {
