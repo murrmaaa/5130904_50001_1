@@ -144,7 +144,7 @@ private:
     void handleMax(std::istringstream& args);
     void handleMin(std::istringstream& args);
     void handleCount(std::istringstream& args);
-    void handleRects(std::istringstream& args);
+    void handleRects(std::istringstream&);
     void handleSame(std::istringstream& args);
     template<typename Predicate>
     double sumAreaIf(Predicate pred) const;
@@ -285,7 +285,7 @@ void CommandProcessor::handleCount(std::istringstream& args) {
         std::cout << count << std::endl;
     }
 }
-void CommandProcessor::handleRects(std::istringstream& args) {
+void CommandProcessor::handleRects(std::istringstream&) {
     size_t count = countIf(std::bind(&geometry::isRectangle, _1));
     std::cout << count << std::endl;
 }
