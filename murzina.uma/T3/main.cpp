@@ -10,7 +10,6 @@
 #include <cmath>
 #include <map>
 #include <cstdlib>
-#include <set>
 
 using namespace std::placeholders;
 
@@ -21,11 +20,9 @@ struct Point {
     int y;
     Point() : x(0), y(0) {}
     Point(int x, int y) : x(x), y(y) {}
-
     bool operator==(const Point& other) const {
         return x == other.x && y == other.y;
     }
-    
     bool operator<(const Point& other) const {
         if (x != other.x) return x < other.x;
         return y < other.y;
@@ -54,7 +51,6 @@ std::ostream& operator<<(std::ostream& os, const Point& p) {
 
 struct Polygon {
     std::vector<Point> points;
-
     double area() const {
         if (points.size() < 3) return 0.0;
         double area = 0.0;
@@ -66,11 +62,9 @@ struct Polygon {
         }
         return std::abs(area) / 2.0;
     }
-
     size_t vertexCount() const {
         return points.size();
     }
-    
     bool operator==(const Polygon& other) const {
         return points == other.points;
     }
@@ -79,10 +73,8 @@ struct Polygon {
 std::istream& operator>>(std::istream& is, Polygon& poly) {
     size_t numPoints;
     if (!(is >> numPoints)) return is;
-    
     std::vector<Point> points;
     points.reserve(numPoints);
-    
     for (size_t i = 0; i < numPoints; ++i) {
         Point p;
         if (!(is >> p)) {
@@ -91,7 +83,6 @@ std::istream& operator>>(std::istream& is, Polygon& poly) {
         }
         points.push_back(p);
     }
-    
     if (points.size() == numPoints) {
         poly.points = std::move(points);
     } else {
@@ -111,23 +102,18 @@ std::ostream& operator<<(std::ostream& os, const Polygon& poly) {
 bool isRectangle(const Polygon& poly) {
     if (poly.vertexCount() != 4) return false;
     const auto& points = poly.points;
-    
     auto getVector = [](const Point& a, const Point& b) -> std::pair<long long, long long> {
         return {static_cast<long long>(b.x) - a.x, static_cast<long long>(b.y) - a.y};
     };
-    
     auto dot = [](const std::pair<long long, long long>& v1, const std::pair<long long, long long>& v2) -> long long {
         return v1.first * v2.first + v1.second * v2.second;
     };
-    
     for (size_t i = 0; i < 4; ++i) {
         const auto& p1 = points[i];
         const auto& p2 = points[(i + 1) % 4];
         const auto& p3 = points[(i + 2) % 4];
-        
         auto v1 = getVector(p1, p2);
         auto v2 = getVector(p2, p3);
-        
         if (dot(v1, v2) != 0) return false;
     }
     return true;
@@ -137,7 +123,6 @@ bool isSameShape(const Polygon& a, const Polygon& b) {
     if (a.points.size() != b.points.size()) return false;
     size_t n = a.points.size();
     if (n < 3) return false;
-
     auto getSquaredDistances = [](const std::vector<Point>& pts) -> std::vector<long long> {
         std::vector<long long> dists;
         size_t n = pts.size();
@@ -152,7 +137,6 @@ bool isSameShape(const Polygon& a, const Polygon& b) {
         std::sort(dists.begin(), dists.end());
         return dists;
     };
-
     return getSquaredDistances(a.points) == getSquaredDistances(b.points);
 }
 
@@ -161,18 +145,14 @@ bool isSameShape(const Polygon& a, const Polygon& b) {
 class CommandProcessor {
 public:
     using PolygonVector = std::vector<geometry::Polygon>;
-
     explicit CommandProcessor(PolygonVector polygons) : polygons_(std::move(polygons)) {
         initHandlers();
     }
-
     void processCommand(const std::string& commandLine) {
         std::istringstream iss(commandLine);
         std::string command;
         iss >> command;
-        
         if (command.empty()) return;
-
         auto it = handlers_.find(command);
         if (it != handlers_.end()) {
             it->second(iss);
@@ -180,11 +160,9 @@ public:
             std::cout << "<INVALID COMMAND>" << std::endl;
         }
     }
-
 private:
     PolygonVector polygons_;
     std::map<std::string, std::function<void(std::istringstream&)>> handlers_;
-
     void initHandlers() {
         handlers_["AREA"] = std::bind(&CommandProcessor::handleArea, this, _1);
         handlers_["MAX"] = std::bind(&CommandProcessor::handleMax, this, _1);
@@ -192,12 +170,11 @@ private:
         handlers_["COUNT"] = std::bind(&CommandProcessor::handleCount, this, _1);
         handlers_["RECTS"] = std::bind(&CommandProcessor::handleRects, this, _1);
         handlers_["SAME"] = std::bind(&CommandProcessor::handleSame, this, _1);
+        handlers_["MAXSEQ"] = std::bind(&CommandProcessor::handleMaxSeq, this, _1);
     }
-
     template<typename Predicate>
     double sumAreaIf(Predicate pred) const {
         if (polygons_.empty()) return 0.0;
-        
         double sum = 0.0;
         for (const auto& poly : polygons_) {
             if (pred(poly)) {
@@ -206,21 +183,17 @@ private:
         }
         return sum;
     }
-
     template<typename Predicate>
     size_t countIf(Predicate pred) const {
         return std::count_if(polygons_.cbegin(), polygons_.cend(), pred);
     }
-
     void handleArea(std::istringstream& args) {
         std::string param;
         args >> param;
-        
         if (param.empty()) {
-             std::cout << "<INVALID COMMAND>" << std::endl;
-             return;
+            std::cout << "<INVALID COMMAND>" << std::endl;
+            return;
         }
-
         if (polygons_.empty()) {
             if (param == "MEAN") {
                 std::cout << "<INVALID COMMAND>" << std::endl;
@@ -240,7 +213,6 @@ private:
             }
             return;
         }
-
         if (param == "ODD") {
             double sum = sumAreaIf([](const geometry::Polygon& p) {
                 return p.vertexCount() % 2 != 0;
@@ -273,16 +245,13 @@ private:
             }
         }
     }
-
     void handleMax(std::istringstream& args) {
         std::string param;
         args >> param;
-        
         if (param.empty() || polygons_.empty()) {
             std::cout << "<INVALID COMMAND>" << std::endl;
             return;
         }
-
         if (param == "AREA") {
             auto maxIt = std::max_element(polygons_.cbegin(), polygons_.cend(),
                 [](const geometry::Polygon& a, const geometry::Polygon& b) {
@@ -299,16 +268,13 @@ private:
             std::cout << "<INVALID COMMAND>" << std::endl;
         }
     }
-
     void handleMin(std::istringstream& args) {
         std::string param;
         args >> param;
-
         if (param.empty() || polygons_.empty()) {
             std::cout << "<INVALID COMMAND>" << std::endl;
             return;
         }
-
         if (param == "AREA") {
             auto minIt = std::min_element(polygons_.cbegin(), polygons_.cend(),
                 [](const geometry::Polygon& a, const geometry::Polygon& b) {
@@ -325,16 +291,13 @@ private:
             std::cout << "<INVALID COMMAND>" << std::endl;
         }
     }
-
     void handleCount(std::istringstream& args) {
         std::string param;
         args >> param;
-        
         if (param.empty()) {
             std::cout << "<INVALID COMMAND>" << std::endl;
             return;
         }
-
         if (param == "ODD") {
             size_t count = countIf([](const geometry::Polygon& p) {
                 return p.vertexCount() % 2 != 0;
@@ -361,23 +324,38 @@ private:
             }
         }
     }
-
     void handleRects(std::istringstream&) {
         size_t count = countIf(geometry::isRectangle);
         std::cout << count << std::endl;
     }
-
     void handleSame(std::istringstream& args) {
         geometry::Polygon target;
         if (!(args >> target)) {
             std::cout << "<INVALID COMMAND>" << std::endl;
             return;
         }
-        
         size_t count = countIf([&target](const geometry::Polygon& p) {
             return geometry::isSameShape(target, p);
         });
         std::cout << count << std::endl;
+    }
+    void handleMaxSeq(std::istringstream& args) {
+        geometry::Polygon target;
+        if (!(args >> target)) {
+            std::cout << "<INVALID COMMAND>" << std::endl;
+            return;
+        }
+        size_t maxSeq = 0;
+        size_t currentSeq = 0;
+        for (const auto& poly : polygons_) {
+            if (geometry::isSameShape(target, poly)) {
+                ++currentSeq;
+                maxSeq = std::max(maxSeq, currentSeq);
+            } else {
+                currentSeq = 0;
+            }
+        }
+        std::cout << maxSeq << std::endl;
     }
 };
 
@@ -387,22 +365,17 @@ int main(int argc, char* argv[]) {
             std::cerr << "Error: Filename parameter is required" << std::endl;
             return EXIT_FAILURE;
         }
-
         std::ifstream file(argv[1]);
         if (!file.is_open()) {
             std::cerr << "Error: Cannot open file " << argv[1] << std::endl;
             return EXIT_FAILURE;
         }
-
         std::vector<geometry::Polygon> polygons;
         std::string line;
-        
         while (std::getline(file, line)) {
             if (line.empty()) continue;
-            
             std::istringstream iss(line);
             geometry::Polygon poly;
-            
             if (iss >> poly) {
                 if (poly.vertexCount() >= 3) {
                     polygons.push_back(poly);
@@ -410,24 +383,13 @@ int main(int argc, char* argv[]) {
             }
         }
         file.close();
-
-        std::sort(polygons.begin(), polygons.end(), [](const geometry::Polygon& a, const geometry::Polygon& b) {
-            if (a.points.size() != b.points.size()) return a.points.size() < b.points.size();
-            return a.points < b.points;
-        });
-        
-        auto last = std::unique(polygons.begin(), polygons.end());
-        polygons.erase(last, polygons.end());
-
         CommandProcessor processor(std::move(polygons));
-
         std::string command;
         while (std::getline(std::cin, command)) {
             if (!command.empty()) {
                 processor.processCommand(command);
             }
         }
-
         return EXIT_SUCCESS;
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
