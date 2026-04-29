@@ -13,7 +13,8 @@
 using namespace std::placeholders;
 namespace geometry {
 struct Point {
-    int x, y;
+    int x = 0;
+    int y = 0;
     bool operator==(const Point& other) const;
 };
 std::istream& operator>>(std::istream& is, Point& p);
@@ -36,6 +37,8 @@ std::istream& operator>>(std::istream& is, Point& p) {
     is >> open >> p.x >> comma >> p.y >> close;
     if (open != '(' || comma != ';' || close != ')') {
         is.setstate(std::ios::failbit);
+        p.x = 0;
+        p.y = 0;
     }
     return is;
 }
@@ -334,8 +337,15 @@ int main(int argc, char* argv[]) {
             if (line.empty()) continue;
             std::istringstream iss(line);
             geometry::Polygon poly;
+            bool success = false;
             if (iss >> poly) {
-                polygons.push_back(poly);
+                success = true;
+                if (poly.vertexCount() > 0) {
+                    polygons.push_back(poly);
+                }
+            }
+            if (!success) {
+                continue;
             }
         }
         file.close();
