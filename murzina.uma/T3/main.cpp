@@ -16,36 +16,23 @@ struct Point {
     int x;
     int y;
     Point() : x(0), y(0) {}
+    bool operator==(const Point& other) const {
+        return x == other.x && y == other.y;
+    }
 };
 std::istream& operator>>(std::istream& is, Point& p) {
     char open, comma, close;
+    if (is >> open && open == '(' && is >> p.x && is >> comma && comma == ';' && is >> p.y && is >> close && close == ')') {
+        return is;
+    }
+    is.setstate(std::ios::failbit);
     p.x = 0;
     p.y = 0;
-    is >> open;
-    if (open != '(') {
-        is.setstate(std::ios::failbit);
-        return is;
-    }
-    is >> p.x;
-    is >> comma;
-    if (comma != ';') {
-        is.setstate(std::ios::failbit);
-        return is;
-    }
-    is >> p.y;
-    is >> close;
-    if (close != ')') {
-        is.setstate(std::ios::failbit);
-        return is;
-    }
     return is;
 }
 std::ostream& operator<<(std::ostream& os, const Point& p) {
     os << "(" << p.x << ";" << p.y << ")";
     return os;
-}
-bool operator==(const Point& a, const Point& b) {
-    return a.x == b.x && a.y == b.y;
 }
 struct Polygon {
     std::vector<Point> points;
