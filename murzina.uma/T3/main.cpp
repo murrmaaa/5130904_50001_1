@@ -203,8 +203,15 @@ void CommandProcessor::handleArea(std::istringstream& args) {
     if (polygons_.empty()) {
         if (param == "MEAN") {
             std::cout << "<INVALID COMMAND>" << std::endl;
-        } else {
+        } else if (param == "ODD" || param == "EVEN") {
             std::cout << "0.0" << std::endl;
+        } else {
+            size_t vertexCount = std::stoul(param);
+            if (vertexCount < 3) {
+                std::cout << "<INVALID COMMAND>" << std::endl;
+            } else {
+                std::cout << "0.0" << std::endl;
+            }
         }
         return;
     }
