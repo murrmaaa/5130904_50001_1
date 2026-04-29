@@ -201,7 +201,11 @@ void CommandProcessor::handleArea(std::istringstream& args) {
     std::string param;
     args >> param;
     if (polygons_.empty()) {
-        std::cout << "0.0" << std::endl;
+        if (param == "MEAN") {
+            std::cout << "<INVALID COMMAND>" << std::endl;
+        } else {
+            std::cout << "0.0" << std::endl;
+        }
         return;
     }
     if (param == "ODD") {
@@ -220,6 +224,10 @@ void CommandProcessor::handleArea(std::istringstream& args) {
         std::cout << std::fixed << std::setprecision(1) << sum / polygons_.size() << std::endl;
     } else {
         size_t vertexCount = std::stoul(param);
+        if (vertexCount < 3) {
+            std::cout << "<INVALID COMMAND>" << std::endl;
+            return;
+        }
         double sum = sumAreaIf(std::bind(std::equal_to<size_t>(),
                     std::bind(&geometry::Polygon::vertexCount, _1), vertexCount));
         std::cout << std::fixed << std::setprecision(1) << sum << std::endl;
@@ -280,6 +288,10 @@ void CommandProcessor::handleCount(std::istringstream& args) {
         std::cout << count << std::endl;
     } else {
         size_t vertexCount = std::stoul(param);
+        if (vertexCount < 3) {
+            std::cout << "<INVALID COMMAND>" << std::endl;
+            return;
+        }
         size_t count = countIf(std::bind(std::equal_to<size_t>(),
                     std::bind(&geometry::Polygon::vertexCount, _1), vertexCount));
         std::cout << count << std::endl;
